@@ -9,81 +9,123 @@
             font-family: sans-serif;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            align-items: flex-start; /* Выравниваем контейнер по верхнему краю */
             background-color: #f4f4f4;
-            margin: 0;
+            margin: 20px; /* Добавим немного отступов от краев окна */
         }
         .container {
             background-color: #fff;
-            padding: 30px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: 1fr 2fr; /* Делим на две колонки */
+            gap: 20px;
             width: 80%;
-            max-width: 600px;
+            max-width: 900px;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
         }
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            font-size: 0.9em;
         }
         input[type="text"] {
-            width: 100%;
-            padding: 10px;
+            width: calc(100% - 12px);
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+            font-size: 0.9em;
         }
         button {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
         }
         button:hover {
             background-color: #0056b3;
         }
         textarea {
-            width: 100%;
-            padding: 10px;
+            width: calc(100% - 12px);
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
-            margin-top: 15px;
+            margin-top: 10px;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 0.8em;
             resize: vertical;
-            min-height: 150px;
+            min-height: 200px;
+        }
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        .response-label {
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        /* Стили для полей ввода sendMessage и sendFileByUrl */
+        .message-input-group, .file-input-group {
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .message-input-group label, .file-input-group label {
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Тестирование GREEN-API</h2>
-        <div class="input-group">
-            <label for="idInstance">ID Инстанса:</label>
-            <input type="text" id="idInstance" placeholder="Введите ID инстанса">
-        </div>
-        <div class="input-group">
-            <label for="apiTokenInstance">Токен API:</label>
-            <input type="text" id="apiTokenInstance" placeholder="Введите токен API">
-        </div>
+        <div class="left-panel">
+            <div class="input-group">
+                <label for="idInstance">idInstance:</label>
+                <input type="text" id="idInstance" placeholder="Введите ID инстанса">
+            </div>
+            <div class="input-group">
+                <label for="apiTokenInstance">ApiTokenInstance:</label>
+                <input type="text" id="apiTokenInstance" placeholder="Введите токен API">
+            </div>
 
-        <div>
             <button onclick="getSettings()">getSettings</button>
             <button onclick="getStateInstance()">getStateInstance</button>
-            <button onclick="sendMessage()">sendMessage</button>
-            <button onclick="sendFileByUrl()">sendFileByUrl</button>
-        </div>
 
-        <div class="input-group">
-            <label for="apiResponse">Ответ API:</label>
+            <div class="message-input-group">
+                <label for="chatIdSendMessage">ID чата (sendMessage):</label>
+                <input type="text" id="chatIdSendMessage" placeholder="7xxxxxxxxxx@c.us">
+                <label for="messageToSend">Текст сообщения:</label>
+                <input type="text" id="messageToSend" placeholder="Hello World">
+                <button onclick="sendMessage()">sendMessage</button>
+            </div>
+
+            <div class="file-input-group">
+                <label for="chatIdSendFile">ID чата (sendFileByUrl):</label>
+                <input type="text" id="chatIdSendFile" placeholder="7xxxxxxxxxx@c.us">
+                <label for="fileUrl">URL файла:</label>
+                <input type="text" id="fileUrl" placeholder="https://my.site.com/my_horse.png">
+                <label for="captionFile">Описание (необязательно):</label>
+                <input type="text" id="captionFile" placeholder="">
+                <button onclick="sendFileByUrl()">sendFileByUrl</button>
+            </div>
+        </div>
+        <div class="right-panel">
+            <label class="response-label" for="apiResponse">Ответ API:</label>
             <textarea id="apiResponse" readonly placeholder="Здесь будет отображаться ответ API"></textarea>
         </div>
     </div>
@@ -128,8 +170,8 @@
         }
 
         function sendMessage() {
-            const chatId = prompt("Введите ID чата (например, 7xxxxxxxxxx@c.us):");
-            const message = prompt("Введите сообщение:");
+            const chatId = document.getElementById('chatIdSendMessage').value;
+            const message = document.getElementById('messageToSend').value;
             if (chatId && message) {
                 fetchData('sendMessage', { chatId: chatId, message: message });
             } else {
@@ -138,9 +180,9 @@
         }
 
         function sendFileByUrl() {
-            const chatId = prompt("Введите ID чата (например, 7xxxxxxxxxx@c.us):");
-            const urlFile = prompt("Введите URL файла:");
-            const caption = prompt("Введите описание к файлу (необязательно):");
+            const chatId = document.getElementById('chatIdSendFile').value;
+            const urlFile = document.getElementById('fileUrl').value;
+            const caption = document.getElementById('captionFile').value;
             if (chatId && urlFile) {
                 fetchData('sendFileByUrl', { chatId: chatId, urlFile: urlFile, caption: caption || '' });
             } else {
