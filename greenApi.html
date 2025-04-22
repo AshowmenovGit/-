@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование GREEN-API</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Тестирование GREEN-API</h2>
+        <div class="input-group">
+            <label for="idInstance">ID Инстанса:</label>
+            <input type="text" id="idInstance" placeholder="Введите ID инстанса">
+        </div>
+        <div class="input-group">
+            <label for="apiTokenInstance">Токен API:</label>
+            <input type="text" id="apiTokenInstance" placeholder="Введите токен API">
+        </div>
+
+        <div>
+            <button onclick="getSettings()">getSettings</button>
+            <button onclick="getStateInstance()">getStateInstance</button>
+            <button onclick="sendMessage()">sendMessage</button>
+            <button onclick="sendFileByUrl()">sendFileByUrl</button>
+        </div>
+
+        <div class="input-group">
+            <label for="apiResponse">Ответ API:</label>
+            <textarea id="apiResponse" readonly placeholder="Здесь будет отображаться ответ API"></textarea>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = "https://api.green-api.com/";
+        const responseArea = document.getElementById('apiResponse');
+
+        async function fetchData(method, data = {}) {
+            const idInstance = document.getElementById('idInstance').value;
+            const apiTokenInstance = document.getElementById('apiTokenInstance').value;
+
+            if (!idInstance || !apiTokenInstance) {
+                responseArea.value = "Пожалуйста, введите ID инстанса и токен API.";
+                return;
+            }
+
+            const url = `${apiUrl}waInstance${idInstance}/${method}/${apiTokenInstance}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const jsonResponse = await response.json();
+                responseArea.value = JSON.stringify(jsonResponse, null, 2);
+            } catch (error) {
+                responseArea.value = `Ошибка: ${error.message}`;
+            }
+        }
+
+        function getSettings() {
+            fetchData('getSettings');
+        }
+
+        function getStateInstance() {
+            fetchData('getStateInstance');
+        }
+
+        function sendMessage() {
+            const chatId = prompt("Введите ID чата (например, 7xxxxxxxxxx@c.us):");
+            const message = prompt("Введите сообщение:");
+            if (chatId && message) {
+                fetchData('sendMessage', { chatId: chatId, message: message });
+            } else {
+                responseArea.value = "Необходимо ввести ID чата и сообщение.";
+            }
+        }
+
+        function sendFileByUrl() {
+            const chatId = prompt("Введите ID чата (например, 7xxxxxxxxxx@c.us):");
+            const urlFile = prompt("Введите URL файла:");
+            const caption = prompt("Введите описание к файлу (необязательно):");
+            if (chatId && urlFile) {
+                fetchData('sendFileByUrl', { chatId: chatId, urlFile: urlFile, caption: caption || '' });
+            } else {
+                responseArea.value = "Необходимо ввести ID чата и URL файла.";
+            }
+        }
+    </script>
+</body>
+</html>
