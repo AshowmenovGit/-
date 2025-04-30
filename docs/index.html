@@ -9,9 +9,9 @@
             font-family: sans-serif;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Выравниваем контейнер по верхнему краю */
+            align-items: flex-start;
             background-color: #f4f4f4;
-            margin: 20px; /* Добавим немного отступов от краев окна */
+            margin: 20px;
         }
         .container {
             background-color: #fff;
@@ -19,7 +19,7 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: grid;
-            grid-template-columns: 1fr 2fr; /* Делим на две колонки */
+            grid-template-columns: 1fr 2fr;
             gap: 20px;
             width: 80%;
             max-width: 900px;
@@ -79,7 +79,6 @@
             font-size: 0.9em;
             margin-bottom: 5px;
         }
-        /* Стили для полей ввода sendMessage и sendFileByUrl */
         .message-input-group, .file-input-group {
             margin-bottom: 10px;
             border: 1px solid #eee;
@@ -89,36 +88,91 @@
         .message-input-group label, .file-input-group label {
             margin-top: 5px;
         }
+        .hint {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 2px;
+        }
+        .error {
+            color: #d9534f;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        .credentials {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #ffeeba;
+            font-size: 0.9em;
+        }
+        .cors-warning {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="left-panel">
-            <div class="input-group">
-                <label for="idInstance">idInstance:</label>
-                <input type="text" id="idInstance" placeholder="Введите ID инстанса">
+            <div class="warning">
+                <p class="cors-warning">Внимание! Возможны проблемы с CORS при прямом доступе к API!</p>
+                <p>Если вы получаете ошибку "Failed to fetch", возможно, вам потребуется использовать CORS-прокси или настроить серверное приложение.</p>
             </div>
-            <div class="input-group">
-                <label for="apiTokenInstance">ApiTokenInstance:</label>
-                <input type="text" id="apiTokenInstance" placeholder="Введите токен API">
+
+            <div class="credentials">
+                <div class="input-group">
+                    <label for="baseUrl">Базовый URL API:</label>
+                    <input type="text" id="baseUrl" value="https://api.green-api.com/" placeholder="https://api.green-api.com/">
+                    <div class="hint">Стандартный URL: https://api.green-api.com/</div>
+                </div>
+                <div class="input-group">
+                    <label for="idInstance">idInstance:</label>
+                    <input type="text" id="idInstance" placeholder="Введите idInstance">
+                    <div class="hint">Например: 7105235552</div>
+                </div>
+                <div class="input-group">
+                    <label for="apiTokenInstance">ApiTokenInstance:</label>
+                    <input type="text" id="apiTokenInstance" placeholder="Введите apiTokenInstance">
+                    <div class="hint">Например: d69e5602c1934d71949f69ebf6e1c0e44bdc157609b64b77bc</div>
+                </div>
             </div>
 
             <button onclick="getSettings()">getSettings</button>
             <button onclick="getStateInstance()">getStateInstance</button>
 
             <div class="message-input-group">
-                <label for="chatIdSendMessage">ID чата (sendMessage):</label>
-                <input type="text" id="chatIdSendMessage" placeholder="7xxxxxxxxxx@c.us">
+                <label for="phoneNumber">Номер телефона:</label>
+                <input type="text" id="phoneNumber" placeholder="7xxxxxxxxxx">
+                <div class="hint">Введите номер телефона без знака "+" (например: 79123456789)</div>
+                <div id="phoneError" class="error">Некорректный формат номера телефона</div>
+
                 <label for="messageToSend">Текст сообщения:</label>
                 <input type="text" id="messageToSend" placeholder="Hello World">
                 <button onclick="sendMessage()">sendMessage</button>
             </div>
 
             <div class="file-input-group">
-                <label for="chatIdSendFile">ID чата (sendFileByUrl):</label>
-                <input type="text" id="chatIdSendFile" placeholder="7xxxxxxxxxx@c.us">
+                <label for="phoneNumberFile">Номер телефона:</label>
+                <input type="text" id="phoneNumberFile" placeholder="7xxxxxxxxxx">
+                <div class="hint">Введите номер телефона без знака "+" (например: 79123456789)</div>
+                <div id="phoneFileError" class="error">Некорректный формат номера телефона</div>
+
                 <label for="fileUrl">URL файла:</label>
                 <input type="text" id="fileUrl" placeholder="https://my.site.com/my_horse.png">
+
+                <label for="fileName">Имя файла:</label>
+                <input type="text" id="fileName" placeholder="my_horse.png">
+                <div class="hint">Укажите имя файла с расширением (например: photo.jpg, document.pdf)</div>
+
                 <label for="captionFile">Описание (необязательно):</label>
                 <input type="text" id="captionFile" placeholder="">
                 <button onclick="sendFileByUrl()">sendFileByUrl</button>
@@ -131,63 +185,166 @@
     </div>
 
     <script>
-        const apiUrl = "https://api.green-api.com/";
         const responseArea = document.getElementById('apiResponse');
 
-        async function fetchData(method, data = {}) {
-            const idInstance = document.getElementById('idInstance').value;
-            const apiTokenInstance = document.getElementById('apiTokenInstance').value;
+        function formatPhoneNumber(phoneNumber) {
+            // Удаляем все нецифровые символы
+            const cleaned = phoneNumber.replace(/\D/g, '');
 
-            if (!idInstance || !apiTokenInstance) {
-                responseArea.value = "Пожалуйста, введите ID инстанса и токен API.";
+            // Проверяем, что номер начинается с 7 и имеет минимум 11 цифр
+            if (cleaned.length >= 11 && cleaned.startsWith('7')) {
+                return `${cleaned}@c.us`;
+            }
+
+            return null;
+        }
+
+        function getApiUrl() {
+            let baseUrl = document.getElementById('baseUrl').value.trim();
+            const idInstance = document.getElementById('idInstance').value.trim();
+
+            if (!baseUrl.endsWith('/')) {
+                baseUrl += '/';
+            }
+
+            if (!idInstance) {
+                return null;
+            }
+
+            return baseUrl;
+        }
+
+        function validateCredentials() {
+            const idInstance = document.getElementById('idInstance').value.trim();
+            const apiTokenInstance = document.getElementById('apiTokenInstance').value.trim();
+
+            if (!idInstance) {
+                responseArea.value = "Пожалуйста, введите idInstance.";
+                return false;
+            }
+
+            if (!apiTokenInstance) {
+                responseArea.value = "Пожалуйста, введите apiTokenInstance.";
+                return false;
+            }
+
+            return true;
+        }
+
+        async function fetchData(method, httpMethod = 'GET', data = null) {
+            if (!validateCredentials()) {
+                return;
+            }
+
+            const idInstance = document.getElementById('idInstance').value.trim();
+            const apiTokenInstance = document.getElementById('apiTokenInstance').value.trim();
+            const apiUrl = getApiUrl();
+
+            if (!apiUrl) {
                 return;
             }
 
             const url = `${apiUrl}waInstance${idInstance}/${method}/${apiTokenInstance}`;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
+            responseArea.value = `Отправка запроса на: ${url}\n`;
 
-                const jsonResponse = await response.json();
-                responseArea.value = JSON.stringify(jsonResponse, null, 2);
+            const options = {
+                method: httpMethod,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (data && httpMethod !== 'GET') {
+                options.body = JSON.stringify(data);
+                responseArea.value += `Тело запроса: ${JSON.stringify(data, null, 2)}\n\n`;
+            }
+
+            try {
+                responseArea.value += "Ожидание ответа...\n";
+                const response = await fetch(url, options);
+
+                try {
+                    const jsonResponse = await response.json();
+                    responseArea.value += `Статус: ${response.status}\n\nОтвет:\n${JSON.stringify(jsonResponse, null, 2)}`;
+                } catch (parseError) {
+                    // Если не удалось распарсить JSON, выводим текст ответа
+                    const textResponse = await response.text();
+                    responseArea.value += `Статус: ${response.status}\n\nОтвет (не JSON):\n${textResponse}`;
+                }
             } catch (error) {
-                responseArea.value = `Ошибка: ${error.message}`;
+                responseArea.value += `\nОшибка: ${error.message}\n\n`;
+                responseArea.value += "Возможные причины:\n";
+                responseArea.value += "1. Проблемы с подключением к интернету\n";
+                responseArea.value += "2. CORS-ограничения (Cross-Origin Resource Sharing)\n";
+                responseArea.value += "3. Неверный URL API\n";
+                responseArea.value += "4. Сервер GREEN-API недоступен\n\n";
+                responseArea.value += "Попробуйте использовать CORS-прокси или настроить серверное приложение для работы с API.";
             }
         }
 
         function getSettings() {
-            fetchData('getSettings');
+            fetchData('getSettings', 'GET');
         }
 
         function getStateInstance() {
-            fetchData('getStateInstance');
+            fetchData('getStateInstance', 'GET');
         }
 
         function sendMessage() {
-            const chatId = document.getElementById('chatIdSendMessage').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
             const message = document.getElementById('messageToSend').value;
-            if (chatId && message) {
-                fetchData('sendMessage', { chatId: chatId, message: message });
+            const phoneError = document.getElementById('phoneError');
+
+            const chatId = formatPhoneNumber(phoneNumber);
+
+            if (!chatId) {
+                phoneError.style.display = 'block';
+                return;
             } else {
-                responseArea.value = "Необходимо ввести ID чата и сообщение.";
+                phoneError.style.display = 'none';
             }
+
+            if (!message) {
+                responseArea.value = "Необходимо ввести сообщение.";
+                return;
+            }
+
+            fetchData('sendMessage', 'POST', { chatId: chatId, message: message });
         }
 
         function sendFileByUrl() {
-            const chatId = document.getElementById('chatIdSendFile').value;
+            const phoneNumber = document.getElementById('phoneNumberFile').value;
             const urlFile = document.getElementById('fileUrl').value;
+            const fileName = document.getElementById('fileName').value;
             const caption = document.getElementById('captionFile').value;
-            if (chatId && urlFile) {
-                fetchData('sendFileByUrl', { chatId: chatId, urlFile: urlFile, caption: caption || '' });
+            const phoneError = document.getElementById('phoneFileError');
+
+            const chatId = formatPhoneNumber(phoneNumber);
+
+            if (!chatId) {
+                phoneError.style.display = 'block';
+                return;
             } else {
-                responseArea.value = "Необходимо ввести ID чата и URL файла.";
+                phoneError.style.display = 'none';
             }
+
+            if (!urlFile) {
+                responseArea.value = "Необходимо указать URL файла.";
+                return;
+            }
+
+            if (!fileName) {
+                responseArea.value = "Необходимо указать имя файла.";
+                return;
+            }
+            
+            fetchData('sendFileByUrl', 'POST', {
+                chatId: chatId,
+                urlFile: urlFile,
+                fileName: fileName,
+                caption: caption || ''
+            });
         }
     </script>
 </body>
