@@ -173,8 +173,8 @@
     // Методы
     function getSettings() { callApi('getSettings'); }
     function getStateInstance() { callApi('getStateInstance'); }
-    function logout() { callApi('logout', 'POST'); }
-    function reboot() { callApi('reboot', 'POST'); }
+    function logout() { callApi('logout', 'GET'); }
+    function reboot() { callApi('reboot', 'GET'); }
 
     function sendMessage() {
       const phone = document.getElementById('phoneNumber').value.trim();
